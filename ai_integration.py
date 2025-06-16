@@ -2,7 +2,7 @@ from gpt4all import GPT4All
 import subprocess
 import os
 import datetime
-
+import re
 
 class Karina:
     
@@ -39,10 +39,30 @@ class Karina:
     
     def shutdown_computer(self):
         subprocess.run(["osascript", "-e", 'tell app "System Events" to shut down'])
+    def get_weather(self, location="Winnipeg"):
+        try:
+            location_clean = location.strip().replace(" ", "+")
+            result = subprocess.run(
+                ["curl", f"wttr.in/{location_clean}?format=3"],
+                capture_output=True,
+                text=True
+            )
+            return result.stdout.strip()
+        except Exception as e:
+            return f"Error getting weather: {e}"
+
+
+
+
+    def open_youtube(self):
+        subprocess.run(['open', '-a', 'Firefox', 'https://www.youtube.com'])
 
 
     def open_firefox(self):
         subprocess.run(["open", '-a', 'Firefox'])
+
+    def open_telegram(self):
+        subprocess.run(["open", "-a", "Telegram"])
 
 
     def get_volume(self):
@@ -80,6 +100,27 @@ class Karina:
                 elif any(cmd in prompt.lower() for cmd in ["open firefox", "open browser", "open web"]):
                     self.open_firefox()
                     print("Karina: Already!")
+                
+                elif any(cmd in prompt.lower() for cmd in ["open telegram"]):
+                    self.open_telegram()
+                    print("Karina: Already!")
+
+                elif any(cmd in prompt.lower() for cmd in ["open youtube", "play youtube", "go to youtube"]):
+                    self.open_youtube()
+                    print("Karina: YouTube opened, dear")
+
+                elif "weather" in prompt.lower():
+                    # Спробуємо витягти місто з речення
+                    match = re.search(r"(?:weather(?:\s+in)?|in)\s+([\w\s]+)", prompt.lower())
+                    if match:
+                        location = match.group(1).strip()
+                    else:
+                        location = "Winnipeg"
+
+                    weather = self.get_weather(location=location)
+                    print(f"Karina: {weather}")
+
+
 
                 elif any(cmd in prompt.lower() for cmd in ["shutdown computer"]):
                     self.shutdown_computer()
@@ -93,12 +134,9 @@ class Karina:
                     response = session.generate(prompt)
                     print("Karina:", response)
 
-# '''
-# volume, 
-# open tabs in firefox, 
+# ''' 
 # connect to telegram,
 # read files if needed
-# shutdown_computer()
 # get_weather(location)
 # search_web(query)
 # send_email(to, subject, body)
@@ -113,5 +151,6 @@ class Karina:
 # You: a lie, it is 17 C
 # Karina: Oh, I apologize for that mistake. Here's the correct temperature in Celsius: 17.72 degrees Celsius.
 # You: how do you count this?
-# Karina: To count this, you can use a calculator or a mental math trick. For example, if you multiply 5 by 3, you get 15. If you add 5 to 15, you get 20. So, 5 plus 20 equals 25.
+# Karina: To count this, you can use a calculator or a mental math trick. For example, if you multiply 5 by 3, you get 15. 
+# If you add 5 to 15, you get 20. So, 5 plus 20 equals 25.
 # You: 
