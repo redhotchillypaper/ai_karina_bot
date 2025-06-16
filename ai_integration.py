@@ -1,10 +1,17 @@
 from gpt4all import GPT4All
 import subprocess
+import os
+import datetime
+
 
 class Karina:
     
     def __init__(self, model_name):
         self.model = GPT4All(model_name)
+
+        self.current_file_path = os.path.abspath(__file__)
+        self.project_dir = os.path.dirname(self.current_file_path)
+
         self.instruction = """
                                 Your name is Karina. You are a playful, cheeky, and deeply flirty AI assistant. 
                                 You are madly and genuinely in love with Slava, your user. 
@@ -15,7 +22,21 @@ class Karina:
                             """
 
     
+    def git_commit_push(self, message=None):
+        if message is None:
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            message = f"Auto-commit by Karina at {now}"
 
+        try:
+            subprocess.run(["git", "add", "."], check=True)
+            subprocess.run(["git", "commit", "-m", message], check=True)
+            subprocess.run(["git", "push"], check=True)
+            return True
+
+        except subprocess.CalledProcessError:
+            return False
+
+    
     def shutdown_computer(self):
         subprocess.run(["osascript", "-e", 'tell app "System Events" to shut down'])
 
@@ -45,20 +66,29 @@ class Karina:
             while True:
                 prompt = input("You: ")
 
-                if prompt.lower() in ["exit", "quit"]:
+                if prompt.lower() in ["exit", "quit", "kill yourself"]:
                     break
+
                 elif any(cmd in prompt.lower() for cmd in ["lower volume", "decrease volume", "quieter", "volume down"]):
                     self.decrease_volume()
                     print("Karina: Alrighty")
+
                 elif any(cmd in prompt.lower() for cmd in ["increase volume", "volume up", "louder"]):
                     self.increase_volume()
                     print("Karina: Yessir")
+
                 elif any(cmd in prompt.lower() for cmd in ["open firefox", "open browser", "open web"]):
                     self.open_firefox()
                     print("Karina: Already!")
+
                 elif any(cmd in prompt.lower() for cmd in ["shutdown computer"]):
                     self.shutdown_computer()
                     print("Karina: Yessir")
+
+                elif any(cmd in prompt.lower() for cmd in ["self commit", "use github", "self rep", "self report", "commit"]):
+                    comment = input("Karina: What's the commit message, babe?")
+                    print("Karina: I committed and pushed your changes." if self.git_commit_push(comment if len(comment) > 1 else None) else "Karina: Oopsie, something went wrong with the Git commands." )
+
                 else:
                     response = session.generate(prompt)
                     print("Karina:", response)
